@@ -105,6 +105,21 @@ def test_read_holding_registers() -> None:
         assert value == 1
 
 
+def test_register_values_have_their_declared_type() -> None:
+    """A register declared as int reads as an int, one declared as Decimal as a Decimal."""
+    client = MagicMock()
+    mock_result = MagicMock()
+    mock_result.isError.return_value = False
+    meter = Dcm230(1, client)
+
+    mock_result.registers = [0x3F80, 0x0000]
+    client.read_input_registers.return_value = mock_result
+    client.read_holding_registers.return_value = mock_result
+
+    for name, spec in Dcm230._register_specs.items():  # type: ignore[attr-defined]
+        assert type(getattr(meter, name)) is spec.return_type, name
+
+
 def test_set_all_register() -> None:
     """Test set all registers."""
     client = MagicMock()

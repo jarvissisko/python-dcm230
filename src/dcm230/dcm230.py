@@ -223,7 +223,8 @@ class Dcm230:
             register_name: Name of the register as defined in `_register_specs`.
 
         Returns:
-            A Decimal value representing the scaled register reading.
+            A Decimal value representing the scaled register reading, or an
+            int for registers whose `return_type` is `int`.
 
         Raises:
             ValueError: If register unpacking fails or returns overflow values.
@@ -235,7 +236,7 @@ class Dcm230:
         if spec.return_type is Decimal:
             value = Decimal(str(self._unpack(regs, spec.address)))
             return round(value, spec.decimals)
-        return self._unpack(regs, spec.address)
+        return round(self._unpack(regs, spec.address))
 
     def _write_registers(self, address: int, value: int) -> None:
         """Write to Modbus registers.
@@ -252,15 +253,15 @@ class Dcm230:
             msg = f"Failed to write to registers. device_address={self.device_address} address={address} value={value}"
             raise ModbusException(msg)
 
-    def _unpack(self, regs: list[int], address: int) -> int:
-        """Unpack raw Modbus register data into an integer value.
+    def _unpack(self, regs: list[int], address: int) -> float:
+        """Unpack raw Modbus register data into a float value.
 
         Args:
             regs: The list of register values to unpack.
             address: The base register address (used for error reporting).
 
         Returns:
-            The unpacked integer representation of the registers.
+            The registers interpreted as a big-endian IEEE 754 float.
 
         Raises:
             ValueError: If an invalid number of registers is provided or an
